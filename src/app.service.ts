@@ -3,6 +3,7 @@ import { Appointment, AppointmentDocument } from './models/appointment.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateAppointmentDto } from './DTO/create-appointment.dto';
+import { BookAppointmentDto } from './DTO/book-appointment.dto';
 
 @Injectable()
 export class AppService {
@@ -35,6 +36,39 @@ export class AppService {
       return {
         status: 500,
         message: 'error occur while creating appointments',
+        data: null,
+      };
+    }
+  }
+
+  async bookAppointment(bookAppointmentDto: BookAppointmentDto) {
+    try {
+      const { date, services, email, phoneNumber, description } =
+        bookAppointmentDto;
+      const appointment = await this.appointmentModel.findOneAndUpdate(
+        { date, isBooked: false },
+        { $set: { email, phoneNumber, description, services, isBooked: true } },
+        { new: true },
+      );
+
+      if (!appointment) {
+        return {
+          status: 404,
+          message: 'appointment not found',
+          data: null,
+        };
+      }
+
+      return {
+        status: 200,
+        message: 'appointment booked successfully',
+        data: appointment,
+      };
+    } catch (error) {
+      console.log('an error occurs in bookAppointment: ', error);
+      return {
+        status: 500,
+        message: 'error occur while booking appointment',
         data: null,
       };
     }
