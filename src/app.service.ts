@@ -14,6 +14,11 @@ export class AppService {
 
   async createAppointments(createAppointmentDto: CreateAppointmentDto) {
     try {
+      // Delete appointments with dates before today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      await this.appointmentModel.deleteMany({ date: { $lt: today } });
+
       const appointments = createAppointmentDto.date.map((date) => ({
         date,
         description: null,
