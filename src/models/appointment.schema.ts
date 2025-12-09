@@ -22,6 +22,9 @@ export class Appointment {
 
   @Prop()
   isBooked: boolean;
+
+  @Prop()
+  name: string;
 }
 
 export const AppointmentSchema = SchemaFactory.createForClass(Appointment);

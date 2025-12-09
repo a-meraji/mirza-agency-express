@@ -7,10 +7,31 @@ import { BookAppointmentDto } from './DTO/book-appointment.dto';
 
 @Injectable()
 export class AppService {
+  private readonly telegramBotToken =
+    '7523098986:AAHT5Fhqux114HI3cdOxpfBx2O3yuZNURF4';
+  private readonly telegramChatId = '621542051';
+
   constructor(
     @InjectModel(Appointment.name)
     private appointmentModel: Model<AppointmentDocument>,
   ) {}
+
+  private async sendTelegramMessage(message: string): Promise<void> {
+    try {
+      const url = `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`;
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: this.telegramChatId,
+          text: message,
+          parse_mode: 'HTML',
+        }),
+      });
+    } catch (error) {
+      console.log('Error sending Telegram message:', error);
+    }
+  }
 
   async createAppointments(createAppointmentDto: CreateAppointmentDto) {
     try {
@@ -24,6 +45,7 @@ export class AppService {
         description: null,
         phoneNumber: null,
         email: null,
+        name: null,
         services: [],
         isBooked: false,
       }));
@@ -48,11 +70,20 @@ export class AppService {
 
   async bookAppointment(bookAppointmentDto: BookAppointmentDto) {
     try {
-      const { date, services, email, phoneNumber, description } =
+      const { date, services, email, phoneNumber, description, name } =
         bookAppointmentDto;
       const appointment = await this.appointmentModel.findOneAndUpdate(
         { date, isBooked: false },
-        { $set: { email, phoneNumber, description, services, isBooked: true } },
+        {
+          $set: {
+            email,
+            phoneNumber,
+            description,
+            services,
+            name,
+            isBooked: true,
+          },
+        },
         { new: true },
       );
 
@@ -63,6 +94,44 @@ export class AppService {
           data: null,
         };
       }
+
+      // Send Telegram notification
+      const appointmentDateTime = new Date(appointment.date);
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      };
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      };
+      const formattedDate = appointmentDateTime.toLocaleDateString(
+        'en-US',
+        dateOptions,
+      );
+      const formattedTime = appointmentDateTime.toLocaleTimeString(
+        'en-US',
+        timeOptions,
+      );
+
+      const telegramMessage = `🔔 New Booking Received! 🔔
+
+
+👤 Client: ${name}
+📧 Email: ${email}
+📱 Phone: ${phoneNumber}
+
+📅 Appointment: ${formattedDate}
+⏰ Time: ${formattedTime}
+
+✅ Services: ${services?.join(', ') || 'None'}
+
+📝 Notes: ${description || 'None'}`;
+
+      await this.sendTelegramMessage(telegramMessage);
 
       return {
         status: 200,

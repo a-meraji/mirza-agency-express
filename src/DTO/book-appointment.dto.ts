@@ -1,8 +1,11 @@
-import { IsDate, IsString } from 'class-validator';
+import { IsDate, IsOptional, IsString } from 'class-validator';
 
 export class BookAppointmentDto {
   @IsDate()
   date: Date;
+
+  @IsString()
+  name: string;
 
   @IsString({ each: true })
   services: string[];
@@ -14,5 +17,6 @@ export class BookAppointmentDto {
   phoneNumber: string;
 
   @IsString()
-  description: string;
+  @IsOptional()
+  description?: string;
 }
