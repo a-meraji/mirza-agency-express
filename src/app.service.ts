@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateAppointmentDto } from './DTO/create-appointment.dto';
 import { BookAppointmentDto } from './DTO/book-appointment.dto';
+import { GetAppointmentDto } from './DTO/get-appointment.dto';
 
 @Injectable()
 export class AppService {
@@ -143,6 +144,72 @@ export class AppService {
       return {
         status: 500,
         message: 'error occur while booking appointment',
+        data: null,
+      };
+    }
+  }
+
+  async getAppointments(getAppointmentDto: GetAppointmentDto) {
+    try {
+      const { date } = getAppointmentDto;
+      if (date) {
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+        const appointments = await this.appointmentModel.find(
+          {
+            date: { $gte: startDate, $lt: endDate },
+          },
+          {
+            _id: 0,
+            date: 1,
+            name: 0,
+            isBooked: 1,
+            email: 0,
+            phoneNumber: 0,
+            description: 0,
+            services: 0,
+          },
+        );
+        return {
+          status: 200,
+          message: 'appointments fetched successfully',
+          data: appointments,
+        };
+      }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const appointments = await this.appointmentModel
+        .find(
+          {
+            date: { $gte: today, $lt: tomorrow },
+          },
+          {
+            _id: 0,
+            date: 1,
+            name: 0,
+            isBooked: 1,
+            email: 0,
+            phoneNumber: 0,
+            description: 0,
+            services: 0,
+          },
+        )
+        .sort({ date: 1 });
+      return {
+        status: 200,
+        message: 'appointments fetched successfully',
+        data: appointments,
+      };
+    } catch (error) {
+      console.log('an error occurs in getAppointments: ', error);
+      return {
+        status: 500,
+        message: 'error occur while fetching appointments',
         data: null,
       };
     }

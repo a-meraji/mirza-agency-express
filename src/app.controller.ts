@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { CreateAppointmentDto } from './DTO/create-appointment.dto';
 import { BookAppointmentDto } from './DTO/book-appointment.dto';
+import { GetAppointmentDto } from './DTO/get-appointment.dto';
 
 @Controller()
 export class AppController {
@@ -15,5 +16,10 @@ export class AppController {
   @Post('book-appointment')
   async bookAppointment(@Body() bookAppointmentDto: BookAppointmentDto) {
     return this.appService.bookAppointment(bookAppointmentDto);
+  }
+
+  @Post('get-appointments')
+  async getAppointments(@Body() getAppointmentDto: GetAppointmentDto) {
+    return this.appService.getAppointments(getAppointmentDto);
   }
 }
