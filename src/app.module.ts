@@ -6,7 +6,9 @@ import { Appointment, AppointmentSchema } from './models/appointment.schema';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/mirza'),
+    MongooseModule.forRoot(
+      'mongodb+srv://merajiamin1997:mica0CZ5kXamWwbN@cluster0.zplywlb.mongodb.net/?appName=Cluster0',
+    ),
     MongooseModule.forFeature([
       { name: Appointment.name, schema: AppointmentSchema },
     ]),
