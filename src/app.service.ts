@@ -41,7 +41,7 @@ export class AppService {
       today.setHours(0, 0, 0, 0);
       await this.appointmentModel.deleteMany({ date: { $lt: today } });
 
-      const appointments = createAppointmentDto.date.map((date) => ({
+      const appointments = createAppointmentDto.dates.map((date) => ({
         date,
         description: null,
         phoneNumber: null,
