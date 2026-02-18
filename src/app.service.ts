@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Appointment, AppointmentDocument } from './models/appointment.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { CreateAppointmentDto } from './DTO/create-appointment.dto';
 import { BookAppointmentDto } from './DTO/book-appointment.dto';
 import { GetAppointmentDto } from './DTO/get-appointment.dto';
@@ -41,7 +41,28 @@ export class AppService {
       today.setHours(0, 0, 0, 0);
       await this.appointmentModel.deleteMany({ date: { $lt: today } });
 
-      const appointments = createAppointmentDto.dates.map((date) => ({
+      // Find which of the requested dates already exist
+      const requestedDates: Date[] = createAppointmentDto.dates.map(
+        (d) => new Date(d),
+      );
+      const filter: FilterQuery<Appointment> = {
+        date: { $in: requestedDates },
+      };
+      const existingRaw: unknown = await this.appointmentModel
+        .find(filter)
+        .select('date')
+        .lean();
+      const existingAppointments = existingRaw as Array<{ date: Date }>;
+      const existingDatesSet = new Set<number>(
+        existingAppointments.map((a) => new Date(a.date).getTime()),
+      );
+
+      // Keep only dates that don't already exist
+      const datesToCreate = createAppointmentDto.dates.filter(
+        (date) => !existingDatesSet.has(new Date(date).getTime()),
+      );
+
+      const appointments = datesToCreate.map((date) => ({
         date,
         description: null,
         phoneNumber: null,
@@ -164,12 +185,7 @@ export class AppService {
           {
             _id: 0,
             date: 1,
-            name: 0,
             isBooked: 1,
-            email: 0,
-            phoneNumber: 0,
-            description: 0,
-            services: 0,
           },
         );
         return {
@@ -191,12 +207,7 @@ export class AppService {
           {
             _id: 0,
             date: 1,
-            name: 0,
             isBooked: 1,
-            email: 0,
-            phoneNumber: 0,
-            description: 0,
-            services: 0,
           },
         )
         .sort({ date: 1 });
