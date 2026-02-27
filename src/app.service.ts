@@ -6,6 +6,7 @@ import { CreateAppointmentDto } from './DTO/create-appointment.dto';
 import { BookAppointmentDto } from './DTO/book-appointment.dto';
 import { GetAppointmentDto } from './DTO/get-appointment.dto';
 
+
 @Injectable()
 export class AppService {
   private readonly telegramBotToken =
